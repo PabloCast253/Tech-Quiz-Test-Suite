@@ -1,3 +1,3 @@
-import User from './User';
+import { IQuestion, Question } from './Question.js';
 
-export default { User };
+export { IQuestion, Question };
