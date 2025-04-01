@@ -1,8 +1,10 @@
 import { useState, } from 'react';
 import type { Question } from '../models/Question.js';
 import { getQuestions } from '../services/questionApi.js';
-
-const Quiz = () => {
+interface QuizProps {
+  getQuestionsOverride?: () => Promise<Question[]>;
+}
+const Quiz = ({ getQuestionsOverride }: QuizProps) => {
   const [questions, setQuestions] = useState<Question[]>([]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [score, setScore] = useState(0);
@@ -11,7 +13,13 @@ const Quiz = () => {
 
   const getRandomQuestions = async () => {
     try {
-      const questions = await getQuestions();
+      const questions = await (getQuestionsOverride ? getQuestionsOverride() : getQuestions());
+      if (questions.length < 1) {
+        throw new Error('No questions found');
+      }
+      // Shuffle the questions array
+      questions.sort(() => Math.random() - 0.5);
+      // Limit to 10 questions
 
       if (!questions) {
         throw new Error('something went wrong!');
