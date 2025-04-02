@@ -18,7 +18,9 @@ const Quiz = ({ getQuestionsOverride }: QuizProps) => {
         throw new Error('No questions found');
       }
       // Shuffle the questions array
-      questions.sort(() => Math.random() - 0.5);
+      if (!getQuestionsOverride) {
+        questions.sort(() => Math.random() - 0.5);
+      }
       // Limit to 10 questions
 
       if (!questions) {
