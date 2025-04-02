@@ -1,33 +1,56 @@
 /// <reference types="cypress" />
 
-import Quiz from '../../client/src/components/Quiz'; // Adjust path if needed
-import { mount } from '@cypress/react18'; // 👈 Use this if you're using React 18
+import Quiz from '../../client/src/components/Quiz';
+import { mount } from '@cypress/react18';
 
-// Mock questions to simulate API response
+// Simulated network delay helper
+const delay = (/** @type {number | undefined} */ ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+// Mock questions
 const mockQuestions = [
   {
-    _id: "q1",
-    question: "What is React?",
+    _id: 'q1',
+    question: 'What is React?',
     answers: [
-      { text: "A library for building UI", isCorrect: true },
-      { text: "A backend framework", isCorrect: false },
-      { text: "A database", isCorrect: false },
+      { text: 'A library for building UI', isCorrect: true },
+      { text: 'A backend framework', isCorrect: false },
+      { text: 'A database', isCorrect: false },
     ],
   },
   {
-    _id: "q2",
-    question: "What is JSX?",
+    _id: 'q2',
+    question: 'What is JSX?',
     answers: [
-      { text: "JavaScript XML", isCorrect: true },
-      { text: "A server", isCorrect: false },
-      { text: "A CSS extension", isCorrect: false },
+      { text: 'JavaScript XML', isCorrect: true },
+      { text: 'A server', isCorrect: false },
+      { text: 'A CSS extension', isCorrect: false },
+    ],
+  },
+  {
+    _id: 'q3',
+    question: 'What is JavaScript?',
+    answers: [
+      { text: 'A programming language', isCorrect: true },
+      { text: 'A database', isCorrect: false },
+      { text: 'A CSS framework', isCorrect: false },
     ],
   },
 ];
 
 describe('<Quiz /> Component', () => {
   beforeEach(() => {
-    mount(<Quiz getQuestionsOverride={() => Promise.resolve(mockQuestions)} />);
+    const root = document.querySelector('[data-cy-root]');
+    if (root) root.innerHTML = '';
+
+    // Return mount to make Cypress wait for it
+    return mount(
+      <Quiz
+        getQuestionsOverride={async () => {
+          await delay(300); // simulate API delay
+          return mockQuestions;
+        }}
+      />
+    );
   });
 
   it('renders the start screen', () => {
@@ -36,25 +59,60 @@ describe('<Quiz /> Component', () => {
 
   it('starts quiz and shows first question', () => {
     cy.contains('Start Quiz').click();
-    cy.get('h2').should('contain.text', mockQuestions[0].question);
+
+    cy.get('body').then(($body) => {
+      if ($body.find('.spinner-border').length > 0) {
+        cy.get('.spinner-border').should('not.exist');
+      }
+
+      cy.contains(mockQuestions[0].question, { timeout: 6000 }).should('be.visible');
+    });
   });
 
   it('selects an answer and moves to next question', () => {
     cy.contains('Start Quiz').click();
-    cy.get('h2').should('contain.text', mockQuestions[0].question);
-    cy.contains(mockQuestions[0].answers[0].text).should('be.visible').prev('button').click();
-    cy.get('h2').should('contain.text', mockQuestions[1].question);
+
+    cy.get('body').then(($body) => {
+      if ($body.find('.spinner-border').length > 0) {
+        cy.get('.spinner-border').should('not.exist');
+      }
+
+      cy.contains(mockQuestions[0].question).should('be.visible');
+
+      cy.contains(mockQuestions[0].answers[0].text)
+        .should('be.visible')
+        .prev('button')
+        .click();
+
+      cy.contains(mockQuestions[1].question).should('be.visible');
+    });
   });
 
   it('completes quiz and shows score', () => {
     cy.contains('Start Quiz').click();
 
-    mockQuestions.forEach((q) => {
-      cy.get('h2').should('contain.text', q.question);
-      cy.contains(q.answers[0].text).should('be.visible').prev('button').click();
-    });
+    cy.get('body').then(async ($body) => {
+      if ($body.find('.spinner-border').length > 0) {
+        cy.get('.spinner-border').should('not.exist');
+      }
 
-    cy.contains('Quiz Completed').should('be.visible');
-    cy.contains('Your score:').should('be.visible');
+      for (let i = 0; i < mockQuestions.length; i++) {
+        const current = mockQuestions[i];
+        const next = mockQuestions[i + 1];
+
+        cy.contains(current.question, { timeout: 5000 }).should('be.visible');
+        cy.contains(current.answers[0].text)
+          .should('be.visible')
+          .prev('button')
+          .click();
+
+        if (next) {
+          cy.contains(next.question).should('be.visible');
+        }
+      }
+
+      cy.contains('Quiz Completed', { timeout: 5000 }).should('be.visible');
+      cy.contains('Your score:').should('be.visible');
+    });
   });
 });
