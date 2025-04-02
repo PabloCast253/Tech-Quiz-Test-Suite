@@ -40,7 +40,7 @@ This app allows users to take a 10-question tech quiz, receive a score, and take
 
 ## ▶️ Usage
 📺 Click here to watch the walkthrough:
-* The video demonstrates:
+* The video demonstrates: https://app.screencastify.com/v3/watch/Jj1dG6WQDmjhJvWrDR41
     -   
     -     All Cypress component and E2E tests running and passing
 ## 🧪 Testing
